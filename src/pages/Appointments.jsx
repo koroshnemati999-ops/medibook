@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase } from "../supabase";
 import { cancelAppointment, getMyAppointments } from "../api/appointments";
 
 const TABS = ["upcoming", "past", "cancelled"];

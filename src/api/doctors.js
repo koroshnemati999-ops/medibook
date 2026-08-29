@@ -1,28 +1,12 @@
 // src/api/doctors.js
 
 import { supabase } from "../supabase";
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-const RESOURCE_NAME = "dotcors";
 
-async function fetchFromApi(endpoint = "") {
-  try {
-    const response = await fetch(`${BASE_URL}/${RESOURCE_NAME}${endpoint}`);
-
-    if (!response.ok) {
-      throw new Error(`خطای شبکه: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error(`API Fetch Error [${endpoint}]:`, error);
-    throw error;
-  }
-}
 export async function getAllDoctors() {
   const { data, error } = await supabase.from("doctors").select("*");
   if (error) {
-    console.error("error");
-    throw new Error();
+    console.error(error.message);
+    throw new Error(error.message);
   }
   return data;
 }
@@ -31,9 +15,17 @@ export async function getDoctorById(id) {
   const { data, error } = await supabase
     .from("doctors")
     .select("*")
-    .eq("id", id);
+    .eq("id", id)
+    .maybeSingle();
 
-  return data[0];
+  if (error) {
+    console.error(error.message);
+    throw new Error(error.message);
+  }
+  if (!data) {
+    throw new Response("Doctor not found", { status: 404 });
+  }
+  return data;
 }
 export async function doctorsLoader() {
   return await getAllDoctors();

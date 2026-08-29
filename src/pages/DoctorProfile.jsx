@@ -1,7 +1,7 @@
-import { Link, useLoaderData, useNavigate, useParams } from "react-router-dom";
+import { Link, useLoaderData, useNavigate } from "react-router-dom";
 import useDateSlotPicker from "../hooks/useDateSlotPicker";
 import useBookingStatus from "../hooks/useBookingStatus";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { createAppointment } from "../api/appointments";
 
@@ -388,6 +388,7 @@ function BookAppointment({ doctor, selectedDate, selectedSlot, status }) {
   const navigate = useNavigate();
   const { session } = useAuth();
   const doc = useLoaderData();
+  const [bookingError, setBookingError] = useState("");
 
   async function handleConfirm() {
     if (!session) {
@@ -395,16 +396,28 @@ function BookAppointment({ doctor, selectedDate, selectedSlot, status }) {
       return;
     }
 
-    await createAppointment(
-      doc.id,
-      "2026-07-21",
-      selectedSlot,
-      doc.address,
-      doc.price,
-      "upcoming",
-      session.user.id,
-    );
-    navigate("/appointments");
+    if (!selectedDate || !selectedSlot) {
+      setBookingError("Please select a date and time before confirming.");
+      return;
+    }
+
+    const dateStr = `2026-07-${String(selectedDate.dom).padStart(2, "0")}`;
+
+    try {
+      setBookingError("");
+      await createAppointment(
+        doc.id,
+        dateStr,
+        selectedSlot,
+        doc.address,
+        doc.price,
+        "upcoming",
+        session.user.id,
+      );
+      navigate("/appointments");
+    } catch (err) {
+      setBookingError(err.message);
+    }
   }
 
   return (
@@ -438,6 +451,8 @@ function BookAppointment({ doctor, selectedDate, selectedSlot, status }) {
         <span className="label">Total</span>
         <span className="value">${doctor.price}</span>
       </div>
+
+      {bookingError && <div className="login-error">{bookingError}</div>}
 
       <button
         className={`btn btn-default btn-lg`}
